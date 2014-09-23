@@ -126,18 +126,18 @@ func update(collection string, selector, change interface{}, safe bool) error {
 	return withCollection(collection, nil, update)
 }
 
-func upsert(collection string, selector, change interface{}, safe bool) (*mgo.ChangeInfo, error) {
-	var chinfo *mgo.ChangeInfo
-
+func upsert(collection string, selector, change interface{}, safe bool) (info *mgo.ChangeInfo, err error) {
 	upsert := func(c *mgo.Collection) (err error) {
-		chinfo, err = c.Upsert(selector, change)
+		info, err = c.Upsert(selector, change)
 		//log.Println(chinfo, err)
 		return err
 	}
 	if safe {
-		return chinfo, withCollection(collection, &mgo.Safe{}, upsert)
+		err = withCollection(collection, &mgo.Safe{}, upsert)
+		return
 	}
-	return chinfo, withCollection(collection, nil, upsert)
+	err = withCollection(collection, nil, upsert)
+	return
 }
 
 func remove(collection string, selector interface{}, safe bool) error {
@@ -152,6 +152,16 @@ func remove(collection string, selector interface{}, safe bool) error {
 		return withCollection(collection, &mgo.Safe{}, rm)
 	}
 	return withCollection(collection, nil, rm)
+}
+
+func apply(collection string, selector interface{}, change mgo.Change, result interface{}) (info *mgo.ChangeInfo, err error) {
+	apply := func(c *mgo.Collection) (err error) {
+		info, err = c.Find(selector).Apply(change, result)
+		return err
+	}
+
+	err = withCollection(collection, nil, apply)
+	return
 }
 
 func ensureIndex(collection string, keys ...string) error {

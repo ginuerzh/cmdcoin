@@ -93,23 +93,27 @@ func syncdb() {
 }
 
 func syncOutputs(rtx *btcjson.TxRawResult, height int64) {
+	var vin []string
+
 	for _, in := range rtx.Vin {
 		if in.IsCoinBase() {
 			continue // omit coinbase
 		}
-		op := &models.Output{
-			Txid:  in.Txid,
-			Index: in.Vout,
-		}
-		if err := op.Remove(); err != nil { // spent, remove it
+
+		op := &models.Output{}
+		if err := op.ApplyRemove(in.Txid, in.Vout); err != nil { // spent, remove it
 			log.Println(err)
+			continue
+		}
+		if len(op.Address) > 0 {
+			vin = append(vin, op.Address)
 		}
 	}
 
-	saveOutputs(rtx, height)
+	saveOutputs(rtx, height, vin)
 }
 
-func saveOutputs(rtx *btcjson.TxRawResult, height int64) {
+func saveOutputs(rtx *btcjson.TxRawResult, height int64, vin []string) {
 	for _, out := range rtx.Vout {
 		switch out.ScriptPubKey.Type {
 		case "pubkeyhash", "pubkey", "scripthash":
@@ -118,9 +122,11 @@ func saveOutputs(rtx *btcjson.TxRawResult, height int64) {
 				BlockHeight: height,
 				BlockHash:   rtx.BlockHash,
 				Index:       out.N,
+				Vin:         vin,
 				Address:     out.ScriptPubKey.Addresses[0],
 				Balance:     int64(out.Value * Satoshi),
 				Script:      out.ScriptPubKey.Hex,
+				Age:         rtx.Time,
 			}
 
 			if height > 0 {
@@ -129,7 +135,6 @@ func saveOutputs(rtx *btcjson.TxRawResult, height int64) {
 				}
 				op.Save()
 				fmt.Println("confirmed output:", op.Address, op.Balance)
-
 			} else {
 				if exists, err := op.Exists(); err == nil && !exists {
 					if err := op.Save(); err != nil {
@@ -169,19 +174,23 @@ func getUnconfirmedTx() {
 		if err == nil && !exist {
 			fmt.Println("Unconfirmed tx:", tx.Txid)
 			saveTx(tx, 0)
-		}
 
-		for _, in := range tx.Vin {
-			if in.IsCoinBase() {
-				continue // omit coinbase
+			var vin []string
+			for _, in := range tx.Vin {
+				if in.IsCoinBase() {
+					continue // omit coinbase
+				}
+				op := &models.Output{
+					Txid:  in.Txid,
+					Index: in.Vout,
+				}
+				op.SetHeight(-1)
+				if len(op.Address) > 0 {
+					vin = append(vin, op.Address)
+				}
 			}
-			op := &models.Output{
-				Txid:  in.Txid,
-				Index: in.Vout,
-			}
-			op.SetHeight(0)
+			saveOutputs(tx, 0, vin)
 		}
-		saveOutputs(tx, -1)
 	}
 }
 
@@ -214,14 +223,28 @@ func saveTx(rtx *btcjson.TxRawResult, index int64) {
 		Index:   index,
 	}
 	for _, in := range rtx.Vin {
+		if in.IsCoinBase() {
+			continue
+		}
+
+		pretx := &models.Tx{}
+		if err := pretx.Find(in.Txid); err != nil {
+			log.Println(err)
+			continue
+		}
+
 		vin := &models.Vin{
 			Txid:     in.Txid,
-			Coinbase: in.Coinbase,
-			Vout:     in.Vout,
+			Sequence: in.Sequence,
+			Script:   in.ScriptSig.Hex,
+			PrevOut:  *pretx.Vout[int(in.Vout)],
 		}
 		tx.Vin = append(tx.Vin, vin)
 	}
 	for _, out := range rtx.Vout {
+		if len(out.ScriptPubKey.Addresses) == 0 {
+			continue
+		}
 		vout := &models.Vout{
 			Value:      int64(out.Value * Satoshi),
 			N:          out.N,

@@ -32,11 +32,11 @@ const (
 			"76a914010966776006953d5567439e5e39f86a0d273bee88ac" +
 			"00000000" // lock time
 	*/
-	txHex       = "0100000001fda04ce364a4bbbbcfbf151ffad412c6d62e6a1b87d41c7a7c2e29d01b120871000000006c49304602210081815d8405ca5774563d4c36435c4b8634e28ab71891ce38242edd2a03763d51022100bd9af692063168c4fa4e9a94cd490e4aee74d9ccf04e060bae923829dd2d5003012103c616c029a335f895add6942fdc92f80ff7a51eecb3f668de2965bd37e786930affffffff0200e1f505000000001976a9149c77061d85cc39bf3d9717b6d545fabc277cf52088ac00e9280d180000001976a9147cdf96ae5588a0baa3e8e79c20ea3daf6460fd0388ac00000000"
-	txFee       = 100000
-	privKey     = "5JRqiCuujPYZL7gxqVoGnn7aFwoNZPTLJf5ksAMksqqjaXvKo7W"
-	sendToAddr  = "1PqF4Mmaq9LZ2JznppsamCQCfLbCxnsKGh"
-	outputIndex = 0
+	txHex       = "01000000012901184960230ca5829a646c42bc51e3015524d148d436bd31cc8787dc6f5cf5000000008b483045022100f63bda70a2d886657c575a53fec429b88d3e57a4117afc999124757ea09b13cf02205edb78803c9502337e8bb1b35703c613f26b0b0fca3c8fb7aa7c736d03e00cd0014104984453e60f976f62f76d1f1c8465ac91ecceb3f542f0424ba3cb28333c95b782591a2317da427a201d4493af1c7ba47f8e9f874d9469ea361cf1d032b6c761abffffffff02001b23dd020000001976a9141827617b201902820835cfca3bcad351592451cd88ac00cd536b140000001976a914f04f1233517aae867baf34f867315e95ef8f10c688ac00000000"
+	txFee       = 0
+	privKey     = "5K2XxpdWLPYVBp42k7ED43YCd8A6nKai8pWDctt8D2zCFr9xm6A"
+	sendToAddr  = "178h5Wdk4badUNKFydyxqZ6dvJYZtwUg33"
+	outputIndex = 1
 
 	SIGHASH_ALL = 1
 )
@@ -103,7 +103,7 @@ func signScript(tx *btcwire.MsgTx, idx int, subscript []byte, privKey string) ([
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("compressed pub key:", wif.CompressPubKey)
 	return btcscript.SignatureScript(tx, idx, subscript, SIGHASH_ALL, wif.PrivKey.ToECDSA(), wif.CompressPubKey)
 }
 

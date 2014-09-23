@@ -33,7 +33,7 @@ func multiAddrHandler(resp http.ResponseWriter, form multiAddrForm) {
 		if len(addr) == 0 {
 			continue
 		}
-		confirmed, unconfirmed, err := models.FinalBalance(addr)
+		confirmed, unconfirmed, err := models.FinalBalance(addr, addrs)
 		if err != nil {
 			log.Println(err)
 		}
@@ -51,10 +51,11 @@ type unspentForm struct {
 type unspent struct {
 	//TxAge   int64  `json:"tx_age"`
 	//TxIndex int64  `json:"tx_index"`
-	TxHash string `json:"tx_hash"`
-	TxN    uint32 `json:"tx_output_n"`
-	Script string `json:"script"`
-	Value  int64  `json:"value"`
+	TxHash  string `json:"tx_hash"`
+	TxN     uint32 `json:"tx_output_n"`
+	Script  string `json:"script"`
+	Value   int64  `json:"value"`
+	Address string `json:"address"`
 }
 
 func unspentHandler(resp http.ResponseWriter, form unspentForm) {
@@ -70,10 +71,11 @@ func unspentHandler(resp http.ResponseWriter, form unspentForm) {
 			continue
 		}
 		us := unspent{
-			TxHash: output.Txid,
-			TxN:    output.Index,
-			Script: output.Script,
-			Value:  output.Balance,
+			TxHash:  output.Txid,
+			TxN:     output.Index,
+			Script:  output.Script,
+			Value:   output.Balance,
+			Address: output.Address,
 		}
 		unspents = append(unspents, us)
 	}
