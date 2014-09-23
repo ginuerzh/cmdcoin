@@ -7,7 +7,10 @@ import (
 	"github.com/conformal/btcrpcclient"
 	"github.com/conformal/btcwire"
 	"github.com/ginuerzh/cmdcoin/models"
+	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -22,10 +25,12 @@ var (
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	configs := coinConfigs()
+
 	cfg := &btcrpcclient.ConnConfig{
 		Host:         "localhost:8110",
-		User:         "btcrpc",
-		Pass:         "pbtcrpc",
+		User:         configs["rpcuser"],
+		Pass:         configs["rpcpassword"],
 		DisableTLS:   true,
 		HttpPostMode: true,
 	}
@@ -34,6 +39,24 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func coinConfigs() map[string]string {
+	configs := map[string]string{}
+
+	data, err := ioutil.ReadFile(os.Getenv("HOME") + "/.cmdcoin/cmdcoin.conf")
+	if err != nil {
+		return configs
+	}
+
+	entries := strings.Split(string(data), "\n")
+	for _, entry := range entries {
+		kv := strings.Split(entry, "=")
+		if len(kv) == 2 {
+			configs[kv[0]] = kv[1]
+		}
+	}
+	return configs
 }
 
 func syncdb() {
