@@ -105,6 +105,6 @@ func AddrTxs(addrs []string) ([]Tx, error) {
 			{"vout.address": bson.M{"$in": addrs}},
 		},
 	}
-	err := find(cTxs, selector, nil, 0, 20, []string{"-index"}, nil, &txs)
+	err := find(cTxs, selector, nil, 0, 20, []string{"-time"}, nil, &txs)
 	return txs, err
 }

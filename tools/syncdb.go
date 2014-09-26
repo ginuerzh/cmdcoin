@@ -245,6 +245,9 @@ func saveTx(rtx *btcjson.TxRawResult, index int64) {
 		Time:    rtx.Time,
 		Index:   index,
 	}
+	if tx.Time == 0 {
+		tx.Time = time.Now().Unix()
+	}
 	for _, in := range rtx.Vin {
 		if in.IsCoinBase() {
 			continue

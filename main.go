@@ -19,7 +19,7 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	flag.StringVar(&staticDir, "static", "public", "static files directory")
-	flag.StringVar(&listenAddr, "l", ":8088", "addr on listen")
+	flag.StringVar(&listenAddr, "l", ":8087", "addr on listen")
 	flag.Parse()
 }
 
