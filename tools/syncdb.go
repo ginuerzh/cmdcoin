@@ -295,7 +295,7 @@ func main() {
 		case <-timer.C:
 			syncdb()
 			getUnconfirmedTx()
-			timer = time.NewTimer(time.Second * 3)
+			timer = time.NewTimer(time.Second * 1)
 		}
 	}
 }

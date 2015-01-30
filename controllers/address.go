@@ -45,7 +45,8 @@ func multiAddrHandler(resp http.ResponseWriter, form multiAddrForm) {
 }
 
 type unspentForm struct {
-	Addrs string `form:"addr"`
+	Addr string `form:"addr"`
+	Keys string `form:"keys"`
 }
 
 type unspent struct {
@@ -59,17 +60,34 @@ type unspent struct {
 }
 
 func unspentHandler(resp http.ResponseWriter, form unspentForm) {
-	addrs := strings.Split(form.Addrs, "|")
-	var unspents []unspent
+	//keys := strings.Split(form.Keys, "|")
 
-	outputs, err := models.AddrOutputs(addrs)
+	var unspents []unspent
+	var amount int64
+
+	outputs, err := models.AddrOutputs([]string{form.Addr})
 	if err != nil {
 		log.Println(err)
 	}
 	for _, output := range outputs {
-		if output.BlockHeight <= 0 {
-			continue
+		if output.BlockHeight == 0 && len(output.Vin) > 0 {
+			/*
+				find := false
+				for _, addr := range keys {
+					if addr == output.Vin[0] {
+						find = true
+						break
+					}
+				}
+				if !find {
+					continue
+				}
+			*/
+			if output.Vin[0] != form.Addr {
+				continue
+			}
 		}
+
 		us := unspent{
 			TxHash:  output.Txid,
 			TxN:     output.Index,
@@ -78,7 +96,9 @@ func unspentHandler(resp http.ResponseWriter, form unspentForm) {
 			Address: output.Address,
 		}
 		unspents = append(unspents, us)
+		amount += us.Value
 	}
+	log.Println(amount)
 
 	respData := map[string]interface{}{"unspent_outputs": unspents}
 	writeResponse(resp, respData)

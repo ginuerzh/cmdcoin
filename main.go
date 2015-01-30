@@ -25,6 +25,7 @@ func init() {
 
 func main() {
 	m := martini.Classic()
+	m.Use(controllers.DumpReqBodyHandler)
 	m.Map(btcRpcClient())
 
 	controllers.BindBlockApi(m)

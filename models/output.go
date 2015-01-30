@@ -75,19 +75,24 @@ func AddrOutputs(addrs []string) ([]Output, error) {
 
 func FinalBalance(address string, addrs []string) (confirmed int64, unconfirmed int64, err error) {
 	outputs, err := AddrOutputs([]string{address})
-
-	//log.Println(addrs)
 	for _, op := range outputs {
-		//log.Println(op.Vin)
 		if op.BlockHeight == 0 && len(op.Vin) > 0 {
-			find := false
-			for _, addr := range addrs {
-				if addr == op.Vin[0] {
-					find = true
-					break
+			/*
+				find := false
+				for _, addr := range addrs {
+					if addr == op.Vin[0] {
+						find = true
+						break
+					}
 				}
-			}
-			if !find {
+
+				if !find {
+					unconfirmed += op.Balance
+					continue
+				}
+			*/
+
+			if op.Vin[0] != address {
 				unconfirmed += op.Balance
 				continue
 			}
