@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"github.com/conformal/btcrpcclient"
 	"github.com/ginuerzh/cmdcoin/models"
 	"github.com/martini-contrib/binding"
 	"gopkg.in/go-martini/martini.v1"
@@ -13,6 +14,7 @@ import (
 func BindAddrApi(m *martini.ClassicMartini) {
 	m.Get("/multiaddr", binding.Form(multiAddrForm{}), multiAddrHandler)
 	m.Get("/unspent", binding.Form(unspentForm{}), unspentHandler)
+	m.Get("/newaddr", newAddrHandler)
 }
 
 type multiAddrForm struct {
@@ -102,4 +104,17 @@ func unspentHandler(resp http.ResponseWriter, form unspentForm) {
 
 	respData := map[string]interface{}{"unspent_outputs": unspents}
 	writeResponse(resp, respData)
+}
+
+func newAddrHandler(resp http.ResponseWriter, client *btcrpcclient.Client) {
+	status := "ok"
+
+	addr, err := client.GetNewAddress()
+	if err != nil {
+		status = err.Error()
+		writeResponse(resp, map[string]interface{}{"result": status})
+		return
+	}
+
+	writeResponse(resp, map[string]interface{}{"addr": addr.String(), "result": status})
 }
