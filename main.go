@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"github.com/conformal/btcrpcclient"
+	"github.com/facebookgo/grace/gracehttp"
 	"github.com/ginuerzh/cmdcoin/controllers"
 	"gopkg.in/go-martini/martini.v1"
 	"log"
@@ -33,7 +34,8 @@ func main() {
 	controllers.BindAddrApi(m)
 	controllers.BindWalletApi(m)
 
-	http.ListenAndServe(listenAddr, m)
+	//http.ListenAndServe(listenAddr, m)
+	gracehttp.Serve(&http.Server{Addr: listenAddr, Handler: m})
 }
 
 func btcRpcClient() *btcrpcclient.Client {
